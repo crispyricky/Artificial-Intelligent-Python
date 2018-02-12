@@ -8,6 +8,7 @@ import numpy as np
 import queue
 maze_name = "OpenMaze.txt"
 
+# open maze funtion
 f = open(maze_name)
 maze_sol = []
 with open(maze_name) as inputfile:
@@ -19,7 +20,7 @@ maze = f.readlines()
 
 # In[34]:
 
-
+#dictionary for maze
 maze_dict = {' ':0, 'P':1, '%':2, '.':3, '\n':2}
 maze_height = len(maze)
 maze_width = len(maze[0])
@@ -62,17 +63,16 @@ def bfs(tree, start, end, visit):
     global count
     # maintain a queue of paths
     queue = []
-    # push the first path into the queue
+    # push the first point into the queue
     queue.append(start)
     print('my start is %s',start)
     print('my end is %s',end)
     print('bfs finding...')
     while queue:
-        # get the first path from the queue
+        # get the first point from the queue
 #         print('checking queue')
 #         print(queue)
         node = queue.pop(0)
-        # get the last node from the path
 
 #         print('checking node')
 #         print(node)
@@ -160,7 +160,7 @@ while t != start:
 
 # In[40]:
 
-
+#draw solution
 for node in queue:
     if maze_dict[maze_sol[node[0]][node[1]]] != 1:
         maze_sol[node[0]][node[1]] = "."
@@ -171,28 +171,4 @@ for node in queue:
 
 for n in range(len(maze_sol)):
     print("".join(maze_sol[n]))
-
-
-# In[42]:
-
-
-len(queue)
-
-
-# In[43]:
-
-
-queue
-
-
-# In[44]:
-
-
-count
-
-
-# In[45]:
-
-
-maze
 
