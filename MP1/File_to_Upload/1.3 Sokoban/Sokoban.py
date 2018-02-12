@@ -1,22 +1,25 @@
 
 # coding: utf-8
 
-# In[30]:
+# In[1]:
 
 
 import numpy as np
 import heapq
+import time
 
 
-# In[12]:
+# In[2]:
 
+#put file name in a variable
 
 sokoban_name = 'sokoban1.txt'
 
 
-# In[13]:
+# In[3]:
 
-
+# This is a state class that contains Player's coordinate, boxes' coordinate, each step's cost(for A* which we have not implement yet)
+# and its parent state.
 class state(object):
     def heu_def(self):
         return 0
@@ -41,9 +44,9 @@ class state(object):
         return (self.P_coor == other.P_coor)
 
 
-# In[27]:
+# In[4]:
 
-
+# This is the human decide parameters which would be useful for transformation from characters to numbers.
 soko_number = {' ':0, 'P':1, '%':2, '.':3, 'b':4, 'B':5}
 START_NUM = 1
 WALL_NUM = 2
@@ -53,6 +56,9 @@ BOX_ON_STORAGE_NUM = 5
 PATH_NUM = 0
 MOVE = [[0,-1],[1,0],[0,1],[-1,0]]
 
+
+# This is a funtion to read Sokoban map, it accepts a sokoban txt file and returns a map, a dictionary map, a numpy array box_coordinator
+# a numpy array storage coordinator and the player's starting coordinator.
 def read_sokoban(sokoban_name):
     open_Sokoban = open(sokoban_name, 'r')
     Sokoban_lines = open_Sokoban.readlines()
@@ -75,18 +81,32 @@ def read_sokoban(sokoban_name):
                 storage_coor.append([i, j])
     return Sokoban,Sokoban_Dict,np.array(box_coor),np.array(storage_coor),start_coor
 
+#This is a function to check if input state is the last state.
 def check_done(state,storage_coor):
     return(sorted(state.box_coor.tolist()) == sorted(storage_coor.tolist()))
 
+#This is a function to check if input coordinate is wall.
 def iswall(n_d,Sokoban_Dict):
     return (Sokoban_Dict[n_d[0]][n_d[1]]==WALL_NUM)
 
+#This is a function to check if input coordinate is a box.
 def isbox(n_d,state):
     return (n_d.tolist() in state.box_coor.tolist())
 
+#This is a function to check if input box coordinate can move along the direction.
 def canmove(n_d,di,state,Sokoban_Dict):
-    return (not isbox(n_d+di,state))and(Sokoban_Dict[n_d[0]+di[0]][n_d[1]+di[1]]!=WALL_NUM)
+    status = (not isbox(n_d+di,state))and(Sokoban_Dict[n_d[0]+di[0]][n_d[1]+di[1]]!=WALL_NUM)
+    status = status and to_corner(n_d,di,state,Sokoban_Dict)
+    return status
 
+#This is a function to check if input coordinate is a corner.
+def to_corner(n_d,di,state,Sokoban_Dict):
+    n_loc = n_d+di
+    if (((Sokoban_Dict[n_loc[0]-1,n_loc[1]]==WALL_NUM and Sokoban_Dict[n_loc[0],n_loc[1]-1]==WALL_NUM) or         (Sokoban_Dict[n_loc[0]-1,n_loc[1]]==WALL_NUM and Sokoban_Dict[n_loc[0],n_loc[1]+1]==WALL_NUM) or         (Sokoban_Dict[n_loc[0]+1,n_loc[1]]==WALL_NUM and Sokoban_Dict[n_loc[0],n_loc[1]+1]==WALL_NUM) or         (Sokoban_Dict[n_loc[0]+1,n_loc[1]]==WALL_NUM and Sokoban_Dict[n_loc[0],n_loc[1]-1]==WALL_NUM)) and        (Sokoban_Dict[n_loc[0],n_loc[1]]!=STORAGE_AVAL_NUM)):
+        return False
+    return True
+
+#This is a function to move the box.
 def move_box(n_d,di,temp_box):
     for box in temp_box:
         if ((box[0] == n_d[0])and(box[1] == n_d[1])):
@@ -94,20 +114,21 @@ def move_box(n_d,di,temp_box):
             box[1] = n_d[1]+di[1]
     return
 
-def get_result(Sokoban,Sokoban_Dict,storage_coor,next_state):
+#This is a function to get the final result from the last state.
+def get_result(next_state):
     res = []
     parent = next_state.parent
-    
     while (parent != None):
-        draw_soko(Sokoban,Sokoban_Dict,storage_coor,next_state)
         res.append(next_state.P_coor.tolist())
         next_state = parent
         parent = next_state.parent
     return res
 
+#This is a function to check if the state is already visited.
 def in_visited(next_state,visited):
     return (next_state.save in visited)
 
+#This is a function to draw a Sokoban state.
 def draw_soko(Sokoban,Sokoban_Dict,storage_coor,cur_state):
     for i in range(len(Sokoban)):
         for j in range(len(Sokoban[i])):
@@ -142,10 +163,11 @@ def draw_soko(Sokoban,Sokoban_Dict,storage_coor,cur_state):
         print("".join(Sokoban[n]))
 
 
-# In[28]:
+# In[10]:
 
-
+#This is the main function to solve the sokoban problem 
 def bfs_solve_soko(sokoban_name):
+    start_time=time.time()
     Sokoban,Sokoban_Dict,box_coor,storage_coor,start_coor = read_sokoban(sokoban_name)
     start_state = state(start_coor, box_coor, cost=0, save = [start_coor.tolist(),box_coor.tolist()])
     queue = []
@@ -172,134 +194,29 @@ def bfs_solve_soko(sokoban_name):
 
             next_state = state(n_d, temp_box, parent=cur_state, save = [n_d.tolist(),temp_box.tolist()])
             if(check_done(next_state,storage_coor)):
-                res = get_result(Sokoban,Sokoban_Dict,storage_coor,next_state)
-                return res, len(visited), 
+                draw_soko(Sokoban,Sokoban_Dict,storage_coor,next_state)
+                
+    #             print(next_state)
+    #             draw_soko(Sokoban,Sokoban_Dict,storage_coor,next_state)
+                res = get_result(next_state)
+                print(time.time()-start_time)
+                print(len(res))
+                print(len(visited))
+                return res,len(visited)
             if (next_state.save in visited): continue
             queue.append(next_state)
             visited.append(next_state.save)
 
 
-# In[29]:
+
+# In[11]:
 
 
-a,b = bfs_solve_soko(sokoban_name)
+res,lenvisit = bfs_solve_soko(sokoban_name)
 
 
-# In[ ]:
+# In[9]:
 
 
-Sokoban,Sokoban_Dict,box_coor,storage_coor,start_coor = read_sokoban(sokoban_name)
-queue = []
-bfs_start_state = state(start_coor, box_coor, box_coor)
-
-
-# In[ ]:
-
-
-def soko_Astar(sokoban_name):
-    Sokoban,Sokoban_Dict,box_coor,storage_coor,start_coor = read_sokoban(sokoban_name)
-    start_state = state(start_coor, box_coor, cost=0)
-    queue = []
-    heapq.heappush(queue, start_state)
-    visited = set()
-    visited.add(start_state)
-    
-    while (queue):
-
-        cur_state = heapq.heappop(queue)
-        visited.add(cur_state)
-        
-        for di in MOVE:
-            n_d = np.array(cur_state.P_coor + di) # next_direction
-            if(iswall(n_d,Sokoban_Dict)): 
-                continue
-            if(isbox(n_d,Sokoban_Dict)):
-                if (canmove(n_d,di,Sokoban_Dict)):
-                    move_box(n_d,di,box_coor)
-                else: continue
-            next_state = state(n_d, box_coor, cost=cur_state.cost+1, parent=cur_state)
-            heapq.heappush(queue, next_state)
-            visited.add(next_state)
-            if(check_done(next_state,storage_coor)):
-                res = get_resule(next_state)
-                return res, next_state.cost
-    return None
-
-
-# In[ ]:
-
-
-Sokoban,Sokoban_Dict,box_coor,storage_coor,start_coor = read_sokoban(sokoban_name)
-
-
-# In[ ]:
-
-
-box_coor[0][1]=1000
-
-
-# In[ ]:
-
-
-box_coor
-
-
-# In[ ]:
-
-
-box = [2,2]
-n_d = [2,2]
-di = [0,-1]
-
-
-# In[ ]:
-
-
-box[0] = n_d[0]+di[0]
-box[1] = n_d[1]+di[1]
-
-
-# In[ ]:
-
-
-box[0] == n_d[0]
-
-
-# In[ ]:
-
-
-res, cost=soko_Astar(sokoban_name)
-
-
-# In[ ]:
-
-
-Sokoban,Sokoban_Dict,box_coor,storage_coor,start_coor = read_sokoban(sokoban_name)
-start_state = state(start_coor, box_coor, cost=0)
-queue = []
-heapq.heappush(queue, start_state)
-visited = set()
-visited.add(start_state)
-
-while (queue):
-
-    cur_state = queue.pop(0)
-    visited.add(cur_state)
-    print(cur_state)
-    draw_soko(Sokoban,Sokoban_Dict,storage_coor,cur_state)
-    for di in MOVE:
-        n_d = cur_state.P_coor + di # next_direction
-        if(iswall(n_d,Sokoban_Dict)): 
-            continue
-        if(isbox(n_d,Sokoban_Dict)):
-            if (canmove(n_d,di,Sokoban_Dict)):
-                move_box(n_d,di,box_coor)
-            else: continue
-        next_state = state(n_d, box_coor, cost=cur_state.cost+1, parent=cur_state)
-        if(check_done(next_state,storage_coor)):
-            res = get_resule(next_state)
-        if (next_state in visited):
-            continue
-        queue.append(next_state)
-        visited.add(next_state)
+print(res)
 
