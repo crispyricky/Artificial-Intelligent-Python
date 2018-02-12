@@ -7,7 +7,7 @@ import time
 ###################################
 # import data
 ###################################
-with open("smallSearch.txt") as maze_file:
+with open("mediumSearch.txt") as maze_file:
 #with open("mediumSearch.txt") as f:
 #with open("smallSearch.txt") as f:
     maze = []
@@ -165,10 +165,13 @@ print(path, expanded)
 print(sum([path_len[path[j]][path[j+1]] for j in range(len(path)-1)]))
 maze_sol = maze.copy()
 for i in range(1,len(path)):
-    #convert the number 1, 2, 3... to A, B, C....
-    maze_sol[Points[path[i]][0],Points[path[i]][1]] = chr(i+64)[-1]
+    #convert the number greater than 10 to lower case letter
+    if(i<10):
+        maze_sol[Points[path[i]][0],Points[path[i]][1]] = i
+    else:
+        maze_sol[Points[path[i]][0],Points[path[i]][1]] = chr(i+97-10)[-1]
     print(Points[path[i]])
-file = open('small_solution.txt','w')
+file = open('medium_solution.txt','w')
 for i in range(len(maze_sol)):
     for j in range(len(maze_sol[0])):
         file.write(maze_sol[i][j])
